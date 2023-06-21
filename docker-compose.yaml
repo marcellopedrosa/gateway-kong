@@ -13,6 +13,12 @@ services:
     command: kong migrations bootstrap
     depends_on:
       - db
+    mem_limit: "512m"
+    memswap_limite: "512m"
+    cpus: 0.5
+    logging:
+     options:
+      max-size: "50m"
     environment:
       KONG_DATABASE: postgres
       KONG_PG_DATABASE: kong
