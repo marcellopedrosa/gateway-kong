@@ -52,6 +52,7 @@ services:
 
   kong:
     image: "kong:2.3.2-alpine"
+    container_name: kong.2.3.2
     user: "kong"
     depends_on:
       - db
@@ -67,7 +68,6 @@ services:
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_PG_PASSWORD: kong
-    
     networks:
       - kong-net
     ports:
@@ -88,8 +88,9 @@ services:
   db:
     image: postgres:9.5
     hostname: postgres
+    container_name: postgres.9.5
     ports:
-      - "5432:5432"
+      - "54321:5432"
     environment:
       POSTGRES_DB: kong
       POSTGRES_USER: kong
