@@ -14,7 +14,7 @@ services:
     depends_on:
       - db
     mem_limit: "512m"
-    memswap_limite: "512m"
+    memswap_limit: "512m"
     cpus: 0.5
     logging:
      options:
@@ -87,6 +87,9 @@ services:
     
   db:
     image: postgres:9.5
+    hostname: postgres
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: kong
       POSTGRES_USER: kong
@@ -124,7 +127,6 @@ services:
     restart: always
     networks:
       - kong-net
-      - konga-net
     environment:
       DB_ADAPTER: postgres
       DB_HOST: db
