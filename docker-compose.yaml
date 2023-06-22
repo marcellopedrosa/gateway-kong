@@ -90,7 +90,7 @@ services:
     hostname: postgres
     container_name: postgres.9.5
     ports:
-      - "54321:5432"
+      - "5432:5432"
     environment:
       POSTGRES_DB: kong
       POSTGRES_USER: kong
