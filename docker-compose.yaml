@@ -1,18 +1,22 @@
 version: '3.7'
 
 volumes:
-  kong_data: {}
+  postgres_data:
+   driver: local
 
 networks:
   kong-net:
     external: true
+  microservice-net:
+    external: false
+    driver: bridge
 
 services:
   kong-migrations:
     image: "kong:2.3.2-alpine"
     command: kong migrations bootstrap
     depends_on:
-      - db_service
+      - service_db
     mem_limit: "512m"
     memswap_limit: "512m"
     cpus: 0.5
@@ -21,8 +25,8 @@ services:
       max-size: "50m"
     environment:
       KONG_DATABASE: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db_service
+      KONG_PG_DATABASE: kong_db
+      KONG_PG_HOST: service_db
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
     networks:
@@ -36,11 +40,11 @@ services:
     image: "kong:2.3.2-alpine"
     command: kong migrations up && kong migrations finish
     depends_on:
-      - db_service
+      - service_db
     environment:
       KONG_DATABASE: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db_service
+      KONG_PG_DATABASE: kong_db
+      KONG_PG_HOST: service_db
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
     networks:
@@ -52,22 +56,22 @@ services:
 
   kong:
     image: "kong:2.3.2-alpine"
-    container_name: kong.2.3.2
+    container_name: kong.2.3.2-alpine
     user: "kong"
     depends_on:
-      - db_service
+      - service_db
     environment:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: '0.0.0.0:8001'
       KONG_CASSANDRA_CONTACT_POINTS: db
-      KONG_DATABASE: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db_service
+      postgres_dataBASE: postgres
+      KONG_PG_DATABASE: kong_db
+      KONG_PG_HOST: service_db
       KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_PG_PASSWORD: kong
     networks:
       - kong-net
     ports:
@@ -85,12 +89,12 @@ services:
       restart_policy:
         condition: on-failure
     
-  db_service:
+  service_db:
     image: postgres:9.5
     hostname: postgres
     container_name: postgres.9.5
     environment:
-      POSTGRES_DB: kong
+      POSTGRES_DB: kong_db
       POSTGRES_USER: kong
       POSTGRES_PASSWORD: kong
     ports:
@@ -111,18 +115,16 @@ services:
     tty: true
     networks:
       - kong-net
-    # volumes:
-    #   - kong_data:/var/lib/postgresql/data
 
   konga-prepare:
     container_name: konga-prepare
     image: pantsel/konga:latest
-    command: "-c prepare -a postgres -u postgresql://kong:kong@db_service:5432/konga_db"
+    command: "-c prepare -a postgres -u postgresql://kong:kong@service_db:5432/konga_db"
     networks:
       - kong-net
     restart: on-failure
     depends_on:
-      - db_service
+      - service_db
 
   konga:
     container_name: konga
@@ -132,25 +134,25 @@ services:
       - kong-net
     environment:
       DB_ADAPTER: postgres
-      DB_HOST: db_service
+      DB_HOST: service_db
       DB_USER: kong
       DB_PASSWORD: kong
       TOKEN_SECRET: ahfdjgjgf79JKLFHJKh978953kgdfjkl
       DB_DATABASE: konga_db
       NODE_ENV: production
     depends_on:
-      - db_service
+      - service_db
     ports:
       - "1337:1337"
 
   pgadmin4:
-    image: dpage/pgadmin4:7.3
+    image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
       PGADMIN_DEFAULT_PASSWORD: "123456!"
     ports:
       - "16543:80"
     depends_on:
-      - db_service
+      - service_db
     networks:
       - kong-net
