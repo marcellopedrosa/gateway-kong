@@ -9,7 +9,6 @@ networks:
     external: true
   microservice-net:
     external: false
-    driver: bridge
 
 services:
   kong-migrations:
