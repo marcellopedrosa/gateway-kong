@@ -87,7 +87,7 @@ services:
     
   db:
     image: postgres:9.5
-    container_name: postgres_kong_konga
+    container_name: db_kong_konga
     ports:
       - "5432:5432"
     environment:
