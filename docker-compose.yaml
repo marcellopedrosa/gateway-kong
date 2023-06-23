@@ -87,11 +87,11 @@ services:
     
   db:
     image: postgres:9.5
-    hostname: postgres
-    container_name: postgres.9.5
+    container_name: postgres_kong_konga
     ports:
       - "5432:5432"
     environment:
+      POSTGRES_DB_HOST: "localhost"
       POSTGRES_DB: kong
       POSTGRES_USER: kong
       POSTGRES_PASSWORD: kong
