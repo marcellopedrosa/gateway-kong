@@ -12,7 +12,7 @@ services:
     image: "kong:2.3.2-alpine"
     command: kong migrations bootstrap
     depends_on:
-      - db
+      - db_service
     mem_limit: "512m"
     memswap_limit: "512m"
     cpus: 0.5
@@ -22,7 +22,7 @@ services:
     environment:
       KONG_DATABASE: postgres
       KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db
+      KONG_PG_HOST: db_service
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
     networks:
@@ -36,11 +36,11 @@ services:
     image: "kong:2.3.2-alpine"
     command: kong migrations up && kong migrations finish
     depends_on:
-      - db
+      - db_service
     environment:
       KONG_DATABASE: postgres
       KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db
+      KONG_PG_HOST: db_service
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
     networks:
@@ -55,7 +55,7 @@ services:
     container_name: kong.2.3.2
     user: "kong"
     depends_on:
-      - db
+      - db_service
     environment:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
@@ -63,7 +63,7 @@ services:
       KONG_CASSANDRA_CONTACT_POINTS: db
       KONG_DATABASE: postgres
       KONG_PG_DATABASE: kong
-      KONG_PG_HOST: db
+      KONG_PG_HOST: db_service
       KONG_PG_USER: kong
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
@@ -85,13 +85,13 @@ services:
       restart_policy:
         condition: on-failure
     
-  db:
+  db_service:
     image: postgres:9.5
-    container_name: db_kong_konga
+    hostname: postgres
+    container_name: postgres.9.5
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB_HOST: "localhost"
       POSTGRES_DB: kong
       POSTGRES_USER: kong
       POSTGRES_PASSWORD: kong
@@ -115,12 +115,12 @@ services:
   konga-prepare:
     container_name: konga-prepare
     image: pantsel/konga:latest
-    command: "-c prepare -a postgres -u postgresql://kong:kong@db:5432/konga_db"
+    command: "-c prepare -a postgres -u postgresql://kong:kong@db_service:5432/konga_db"
     networks:
       - kong-net
     restart: on-failure
     depends_on:
-      - db
+      - db_service
 
   konga:
     container_name: konga
@@ -130,13 +130,13 @@ services:
       - kong-net
     environment:
       DB_ADAPTER: postgres
-      DB_HOST: db
+      DB_HOST: db_service
       DB_USER: kong
       DB_PASSWORD: kong
       TOKEN_SECRET: ahfdjgjgf79JKLFHJKh978953kgdfjkl
       DB_DATABASE: konga_db
       NODE_ENV: production
     depends_on:
-      - db
+      - db_service
     ports:
       - "1337:1337"
