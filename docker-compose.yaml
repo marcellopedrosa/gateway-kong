@@ -1,8 +1,7 @@
 version: '3.7'
 
 volumes:
-  postgres_data:
-   driver: local
+  kong_data: {}
 
 networks:
   kong-net:
@@ -64,7 +63,7 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: '0.0.0.0:8001'
       KONG_CASSANDRA_CONTACT_POINTS: db
-      postgres_dataBASE: postgres
+      POSTGRES_DATABASE: postgres
       KONG_PG_DATABASE: kong_db
       KONG_PG_HOST: service_db
       KONG_PG_USER: kong
@@ -73,6 +72,7 @@ services:
       KONG_PROXY_ERROR_LOG: /dev/stderr
     networks:
       - kong-net
+      - microservice-net
     ports:
       - "8000:8000/tcp"
       - "127.0.0.1:8001:8001/tcp"
@@ -100,7 +100,6 @@ services:
       - "5432:5432"
     expose:
       - 5432
-    
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "kong"]
       interval: 30s
@@ -114,6 +113,8 @@ services:
     tty: true
     networks:
       - kong-net
+    # volumes:
+    #   - kong_data:/var/lib/postgresql/data
 
   konga-prepare:
     container_name: konga-prepare
@@ -143,15 +144,3 @@ services:
       - service_db
     ports:
       - "1337:1337"
-
-  pgadmin4:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "123456!"
-    ports:
-      - "16543:80"
-    depends_on:
-      - service_db
-    networks:
-      - kong-net
